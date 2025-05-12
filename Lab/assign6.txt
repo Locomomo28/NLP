@@ -1,0 +1,47 @@
+Q6) Use a more advanced model for sentiment analysis
+
+!pip install transformers
+!pip install torch
+!pip install datasets
+
+# Import required libraries
+import torch
+from transformers import RobertaTokenizer, RobertaForSequenceClassification
+from torch.nn.functional import softmax
+
+# Load the RoBERTa tokenizer and model for sentiment analysis
+tokenizer = RobertaTokenizer.from_pretrained('cardiffnlp/twitter-roberta-base-sentiment')
+model = RobertaForSequenceClassification.from_pretrained('cardiffnlp/twitter-roberta-base-sentiment')
+
+# Function to perform sentiment analysis
+def analyze_sentiment(text):
+    # Tokenize input text
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=512)
+
+    # Run the model to get predictions
+    with torch.no_grad():
+        logits = model(**inputs).logits
+
+    # Apply softmax to get probabilities
+    probs = softmax(logits, dim=1)
+
+    # Map probabilities to sentiment labels
+    labels = ["negative", "neutral", "positive"]
+    sentiment = labels[torch.argmax(probs)]
+    confidence = torch.max(probs).item()
+
+    return sentiment, confidence
+
+# Take complex input from the user
+print("Enter a complex sentence for sentiment analysis (type 'exit' to quit):")
+while True:
+    user_input = input("\nEnter text: ")
+
+    if user_input.lower() == 'exit':
+        break
+
+    sentiment, confidence = analyze_sentiment(user_input)
+
+    # Output the result
+    print(f"\nSentiment: {sentiment}")
+    print(f"Confidence: {confidence:.4f}")
